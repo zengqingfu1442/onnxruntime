@@ -24,6 +24,7 @@ class FusionOptions:
         self.enable_bias_skip_layer_norm = True
         self.enable_bias_gelu = True
         self.enable_gelu_approximation = False
+        self.enable_gemm_fast_gelu = False
         self.attention_mask_format = AttentionMaskFormat.AttentionMask
 
         if model_type == "gpt2":
@@ -57,6 +58,8 @@ class FusionOptions:
             options.enable_bias_gelu = False
         if args.enable_gelu_approximation:
             options.enable_gelu_approximation = True
+        if args.enable_gemm_fast_gelu:
+            options.enable_gemm_fast_gelu = True
         if args.use_mask_index:
             options.use_raw_attention_mask(False)
         if args.no_attention_mask:
@@ -128,6 +131,14 @@ class FusionOptions:
             help="enable Gelu/BiasGelu to FastGelu conversion",
         )
         parser.set_defaults(enable_gelu_approximation=False)
+
+        parser.add_argument(
+            "--enable_gemm_fast_gelu",
+            required=False,
+            action="store_true",
+            help="enable GemmfastGelu fusion",
+        )
+        parser.set_defaults(enable_gemm_fast_gelu=False)
 
         parser.add_argument(
             "--use_mask_index",
