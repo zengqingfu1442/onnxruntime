@@ -18,8 +18,9 @@ class FusionGemmFastGelu(Fusion):
         super().__init__(model, "GemmFastGelu", "FastGelu", "GemmFastGelu")
     
     def fuse(self, node, input_name_to_nodes, output_name_to_node):
-        if len(node.input) != 2:
-            return
+        has_bias = False
+        if len(node.input) == 2:
+            has_bias = True
 
         [matmul] = self.model.match_parent_path(node, ["MatMul"], [0])
         if matmul is None:
@@ -40,20 +41,21 @@ class FusionGemmFastGelu(Fusion):
         if len(weight.shape) != 2:
             return
 
-        bias_weight = None
-        # bias weight should be one dimension
-        bias_index = -1
-        for i, input in enumerate(node.input):
-            initializer = self.model.get_initializer(input)
-            if initializer is None:
-                continue
-            bias_index = i
-            bias_weight = NumpyHelper.to_array(initializer)
-            break
-        if bias_weight is None:
-            return
-        if len(bias_weight.shape) != 1:
-            return
+        if has_bias:
+            bias_weight = None
+            # bias weight should be one dimension
+            bias_index = -1
+            for i, input in enumerate(node.input):
+                initializer = self.model.get_initializer(input)
+                if initializer is None:
+                    continue
+                bias_index = i
+                bias_weight = NumpyHelper.to_array(initializer)
+                break
+            if bias_weight is None:
+                return
+            if len(bias_weight.shape) != 1:
+                return
 
         subgraph_nodes = [node, matmul]
         if not self.model.is_safe_to_fuse_nodes(
@@ -63,9 +65,10 @@ class FusionGemmFastGelu(Fusion):
 
         self.nodes_to_remove.extend(subgraph_nodes)
 
+        inputs=[matmul.input[1-weight_index], matmul.input[weight_index], node.input[bias_index]] if has_bias else [matmul.input[1-weight_index], matmul.input[weight_index]]
         fused_node = helper.make_node(
             "GemmFastGelu",
-            inputs=[matmul.input[1-weight_index], matmul.input[weight_index], node.input[bias_index]],
+            inputs=inputs,
             outputs=node.output,
             name=self.model.create_node_name("GemmFastGelu"),
         )
