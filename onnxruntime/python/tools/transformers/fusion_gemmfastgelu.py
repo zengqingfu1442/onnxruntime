@@ -74,9 +74,9 @@ class FusionGemmFastGelu(Fusion):
         self.nodes_to_remove.extend(subgraph_nodes)
 
         inputs = (
-            [matmul.input[1-weight_index], matmul.input[weight_index], node.input[bias_index]]
+            [matmul.input[1 - weight_index], matmul.input[weight_index], node.input[bias_index]]
             if has_bias
-            else [matmul.input[1-weight_index], matmul.input[weight_index]]
+            else [matmul.input[1 - weight_index], matmul.input[weight_index]]
         )
 
         fused_node = helper.make_node(
