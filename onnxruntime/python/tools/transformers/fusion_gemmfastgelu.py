@@ -16,7 +16,7 @@ logger = getLogger(__name__)
 class FusionGemmFastGelu(Fusion):
     def __init__(self, model: OnnxModel):
         super().__init__(model, "GemmFastGelu", "FastGelu", "GemmFastGelu")
-    
+
     def fuse(self, node, input_name_to_nodes, output_name_to_node):
         """
         This pattern is from PyTorch bert model
