@@ -68,7 +68,7 @@ class BertOnnxModel(OnnxModel):
     def gelu_approximation(self):
         fusion = FusionGeluApproximation(self)
         fusion.apply()
-    
+
     def fuse_gemm_fast_gelu(self):
         fusion = FusionGemmFastGelu(self)
         fusion.apply()

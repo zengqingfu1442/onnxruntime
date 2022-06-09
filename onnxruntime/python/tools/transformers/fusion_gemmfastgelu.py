@@ -18,13 +18,21 @@ class FusionGemmFastGelu(Fusion):
         super().__init__(model, "GemmFastGelu", "FastGelu", "GemmFastGelu")
     
     def fuse(self, node, input_name_to_nodes, output_name_to_node):
+        """
+        This pattern is from PyTorch bert model
+        Fuse Gelu with Erf into one node:
+
+            [root] --> MatMul --> FastGelu -->
+
+        """
         has_bias = False
         if len(node.input) == 2:
             has_bias = True
 
-        [matmul] = self.model.match_parent_path(node, ["MatMul"], [0])
-        if matmul is None:
+        match_nodes = self.model.match_parent_path(node, ["MatMul"], [0])
+        if match_nodes is None:
             return
+        matmul = match_nodes[0]
 
         weight = None
         # matmul weight should be two dimension
@@ -41,10 +49,10 @@ class FusionGemmFastGelu(Fusion):
         if len(weight.shape) != 2:
             return
 
+        # bias weight should be one dimension
+        bias_index = -1
         if has_bias:
             bias_weight = None
-            # bias weight should be one dimension
-            bias_index = -1
             for i, input in enumerate(node.input):
                 initializer = self.model.get_initializer(input)
                 if initializer is None:
@@ -65,7 +73,12 @@ class FusionGemmFastGelu(Fusion):
 
         self.nodes_to_remove.extend(subgraph_nodes)
 
-        inputs=[matmul.input[1-weight_index], matmul.input[weight_index], node.input[bias_index]] if has_bias else [matmul.input[1-weight_index], matmul.input[weight_index]]
+        inputs = (
+            [matmul.input[1-weight_index], matmul.input[weight_index], node.input[bias_index]]
+            if has_bias
+            else [matmul.input[1-weight_index], matmul.input[weight_index]]
+        )
+
         fused_node = helper.make_node(
             "GemmFastGelu",
             inputs=inputs,
