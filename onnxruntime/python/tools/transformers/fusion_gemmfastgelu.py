@@ -20,7 +20,7 @@ class FusionGemmFastGelu(Fusion):
     def fuse(self, node, input_name_to_nodes, output_name_to_node):
         """
         This pattern is from PyTorch bert model
-        Fuse Gelu with Erf into one node:
+        Fuse MatMul with FastGelu into one node:
 
             [root] --> MatMul --> FastGelu -->
 
