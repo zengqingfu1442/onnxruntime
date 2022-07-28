@@ -11,7 +11,7 @@ cmake_path(SET gdk_gxdk_path $ENV{GameDK}/${GDK_EDITION}/GXDK NORMALIZE)
 # Set C/C++ compile flags and additional include directories.
 foreach(lang C CXX)
     set(CMAKE_${lang}_FLAGS_INIT "")
-    string(APPEND CMAKE_${lang}_FLAGS_INIT 
+    string(APPEND CMAKE_${lang}_FLAGS_INIT
         " /D_GAMING_XBOX"
         " /DWINAPI_FAMILY=WINAPI_FAMILY_GAMES"
         " /D_ATL_NO_DEFAULT_LIBS"
@@ -30,11 +30,11 @@ foreach(lang C CXX)
 
     set(CMAKE_${lang}_STANDARD_INCLUDE_DIRECTORIES ${gdk_gxdk_path}/gameKit/Include/${GDK_PLATFORM})
 
-    set(CMAKE_${lang}_STANDARD_LIBRARIES "onecoreuap_apiset.lib" CACHE STRING "" FORCE)
+    set(CMAKE_${lang}_STANDARD_LIBRARIES ${gdk_gxdk_path}/gameKit/lib/amd64/xgameplatform.lib CACHE STRING "" FORCE)
 endforeach()
 
 # It's best to avoid inadvertently linking with any libraries not present in the OS.
-list(APPEND nodefault_libs 
+list(APPEND nodefault_libs
     advapi32.lib
     comctl32.lib
     comsupp.lib
