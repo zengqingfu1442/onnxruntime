@@ -30,6 +30,7 @@ foreach(lang C CXX)
 
     set(CMAKE_${lang}_STANDARD_INCLUDE_DIRECTORIES "${gdk_gxdk_path}/gameKit/Include/${GDK_PLATFORM}")
 
+    # TODO: this should really be xgameplatform.lib
     set(CMAKE_${lang}_STANDARD_LIBRARIES onecoreuap_apiset.lib CACHE STRING "" FORCE)
 endforeach()
 
@@ -60,7 +61,7 @@ list(APPEND nodefault_libs
     oleaut32.lib
     oledlg.lib
     oledlgd.lib
-    oldnames.lib
+    # oldnames.lib (too many instances where this is assumed)
     runtimeobject.lib
     shell32.lib
     shlwapi.lib

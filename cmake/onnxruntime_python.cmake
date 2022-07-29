@@ -781,7 +781,7 @@ if (onnxruntime_USE_TVM)
 
 endif()
 
-if (onnxruntime_USE_DML)
+if (onnxruntime_USE_DML AND NOT GDK_PLATFORM)
   add_custom_command(
     TARGET onnxruntime_pybind11_state POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
