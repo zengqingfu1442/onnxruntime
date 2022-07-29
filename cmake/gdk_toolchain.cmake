@@ -28,9 +28,8 @@ foreach(lang C CXX)
         string(APPEND CMAKE_${lang}_FLAGS_INIT " /D_GAMING_XBOX_XBOXONE /arch:AVX")
     endif()
 
-    set(CMAKE_${lang}_STANDARD_INCLUDE_DIRECTORIES "${gdk_gxdk_path}/gameKit/Include/${GDK_PLATFORM}")
+    set(CMAKE_${lang}_STANDARD_INCLUDE_DIRECTORIES ${gdk_gxdk_path}/gameKit/Include/${GDK_PLATFORM})
 
-    # TODO: this should really be xgameplatform.lib
     set(CMAKE_${lang}_STANDARD_LIBRARIES onecoreuap_apiset.lib CACHE STRING "" FORCE)
 endforeach()
 
