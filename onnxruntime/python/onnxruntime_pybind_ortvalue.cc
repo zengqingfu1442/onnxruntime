@@ -18,6 +18,10 @@
 #ifdef ENABLE_TRAINING
 #include "core/dlpack/dlpack_converter.h"
 #endif
+#include <string.h>
+
+// This is borked. Why is linker not finding this function in the CRT .lib???
+extern "C" char* __cdecl __imp_strdup(const char* src) { return _strdup(src); }
 
 namespace onnxruntime {
 namespace python {
