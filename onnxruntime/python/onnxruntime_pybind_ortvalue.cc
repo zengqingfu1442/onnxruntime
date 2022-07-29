@@ -18,8 +18,6 @@
 #ifdef ENABLE_TRAINING
 #include "core/dlpack/dlpack_converter.h"
 #endif
-#include <string.h>
-
 
 namespace onnxruntime {
 namespace python {
