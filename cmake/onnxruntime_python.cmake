@@ -781,13 +781,22 @@ if (onnxruntime_USE_TVM)
 
 endif()
 
-if (onnxruntime_USE_DML AND NOT GDK_PLATFORM)
-  add_custom_command(
-    TARGET onnxruntime_pybind11_state POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy
-        ${DML_PACKAGE_DIR}/bin/${onnxruntime_target_platform}-win/${DML_SHARED_LIB}
-        $<TARGET_FILE_DIR:${build_output_target}>/onnxruntime/capi/
-  )
+if (onnxruntime_USE_DML)
+  if (dml_BIN_DIR)
+    add_custom_command(
+      TARGET onnxruntime_pybind11_state POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy
+          ${dml_BIN_DIR}/DirectML.dll
+          $<TARGET_FILE_DIR:${build_output_target}>/onnxruntime/capi/
+    )
+  else()
+    add_custom_command(
+      TARGET onnxruntime_pybind11_state POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy
+          ${DML_PACKAGE_DIR}/bin/${onnxruntime_target_platform}-win/${DML_SHARED_LIB}
+          $<TARGET_FILE_DIR:${build_output_target}>/onnxruntime/capi/
+    )
+  endif()
 endif()
 
 if (onnxruntime_USE_NNAPI_BUILTIN)
