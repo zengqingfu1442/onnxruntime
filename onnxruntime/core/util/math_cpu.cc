@@ -308,23 +308,55 @@ void Im2col<T, StorageOrder::NCHW>::operator()(
     int64_t stride_w,
     T* data_col,
     T padding_value) {
+
+    std::cout << "void Im2col<T, StorageOrder::NCHW>::operator()(";
+    std::cout << "\n\tconst T* data_im=" << data_im;
+    std::cout << "\n\tint64_t channels=" << channels;
+    std::cout << "\n\tint64_t heigh=" << height;
+    std::cout << "\n\tint64_t width=" << width;
+    std::cout << "\n\tint64_t kernel_h=" << kernel_h;
+    std::cout << "\n\tint64_t kernel_w=" << kernel_w;
+    std::cout << "\n\tint64_t dilation_h=" << dilation_h;
+    std::cout << "\n\tint64_t dilation_w=" << dilation_w;
+    std::cout << "\n\tint64_t pad_t=" << pad_t;
+    std::cout << "\n\tint64_t pad_l=" << pad_l;
+    std::cout << "\n\tint64_t pad_b=" << pad_b;
+    std::cout << "\n\tint64_t pad_r=" << pad_r;
+    std::cout << "\n\tint64_t stride_h=" << stride_h;
+    std::cout << "\n\tint64_t stride_w=" << stride_w;
+    std::cout << "\n\tT* data_col=" << data_col;
+    std::cout << "\n\tT padding_value=" << padding_value << ")" << std::endl;
+
+  int data_col_offset=0;
   const int64_t output_h = (height + pad_b + pad_t - (dilation_h * (kernel_h - 1) + 1)) / stride_h + 1;
   const int64_t output_w = (width + pad_l + pad_r - (dilation_w * (kernel_w - 1) + 1)) / stride_w + 1;
-
+  std::cout << "output_h: " << output_h << std::endl;
+  std::cout << "output_w: " << output_w << std::endl;
   // From Intel, https://github.com/BVLC/caffe/pull/3536
   int64_t channel_size = height * width;
+  std::cout << "channel_size (height * width): " << channel_size << std::endl;
   for (int64_t channel = channels; channel--; data_im += channel_size) {
+    std::cout << "for channel= " << channel << "/channel_size=" << channel_size << std::endl;
     for (int64_t kernel_row = 0; kernel_row < kernel_h; kernel_row++) {
+      std::cout << "\tfor kernel_row= " << kernel_row << "/kernel_h=" << kernel_h << std::endl;
       for (int64_t kernel_col = 0; kernel_col < kernel_w; kernel_col++) {
+        std::cout << "\t\tfor kernel_col= " << kernel_col << "/kernel_w=" << kernel_w << std::endl;
         int64_t input_row = -pad_t + kernel_row * dilation_h;
+        std::cout << "\t\t\tinput_row= " << input_row << std::endl;
         for (int64_t output_rows = output_h; output_rows; output_rows--) {
+          std::cout << "\t\t\tfor output_rows= " << output_rows << "/output_h=" << output_h << std::endl;
           if (!is_a_ge_zero_and_a_lt_b(input_row, height)) {
             std::fill_n(data_col, output_w, padding_value);
+            std::cout << "\t\t\t\t(input_row out of bounds) data_col["<< data_col_offset << "] = " << padding_value << " * " << output_w << " times"<< std::endl;
+            data_col_offset += output_w;
             data_col += output_w;
           } else {
             int64_t input_col = -pad_l + kernel_col * dilation_w;
+            std::cout << "\t\t\t\tinput_col= " << input_col << std::endl;
+            std::cout << "\t\t\t\tinput_pos= " << input_row * width + input_col << std::endl;
             const T* rdptr = data_im + input_row * width + input_col;
             for (int64_t i = 0; i < output_w;) {
+              std::cout << "\t\t\t\tfor i= " << i << "/output_w=" << output_w << std::endl;
               int64_t output_handled = 1;
               if (is_a_ge_zero_and_a_lt_b(input_col, width)) {
                 if (stride_w == 1) {
@@ -332,6 +364,9 @@ void Im2col<T, StorageOrder::NCHW>::operator()(
                   // and the number of output elements to produce.
                   output_handled = std::min(width - input_col, output_w - i);
                   data_col = std::copy_n(&rdptr[i], static_cast<size_t>(output_handled), data_col);
+                  std::cout << "\t\t\t\t\tdata_col["<< data_col_offset << "] = " << rdptr[i] << std::endl;
+                  data_col_offset += output_handled;
+                  // std::cout << "\t\t\t\t\t(stride 1) Copied " << output_handled << " element(s) from data_im to data_col: " << rdptr[i] << std::endl;
                 } else if (stride_w == 2) {
                   // Same as above except using the number of strided input elements.
                   output_handled = std::min((width - input_col + 1) / 2, output_w - i);
@@ -340,11 +375,14 @@ void Im2col<T, StorageOrder::NCHW>::operator()(
                     *(data_col++) = *local_rdptr;
                     local_rdptr += 2;
                   }
+                  std::cout << "\t\t\t\t\t(stride 2) Copy " << output_handled << " elements from data_im to data_col " << std::endl;
                 } else {
                   *(data_col++) = rdptr[i * stride_w];
+                  std::cout << "\t\t\t\t\t(stride >2) Copy 1 element from data_im to data_col " << std::endl;
                 }
               } else {
                 *(data_col++) = padding_value;
+                std::cout << "\t\t\t\t\t(input_col out of bounds) fill data_col with 1 padding_value= " << padding_value << std::endl;
               }
               input_col += output_handled * stride_w;
               i += output_handled;

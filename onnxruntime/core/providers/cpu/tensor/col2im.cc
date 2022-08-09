@@ -45,6 +45,7 @@ Status Col2Im<T>::Compute(OpKernelContext* context) const {
     // col_input_C computed as => (C*n-ary-prod{kernel_shape}) / n-ary-prod{kernel_shape}
     col_input_C /= kernel_shape->Data<int64_t>()[i];
   }
+  const int64_t col_output_offset = col_input_shape.SizeFromDimension(1);
   const int64_t col_input_offset = col_input_C * image_shape_size;
 
   TensorShapeVector Y_dims;
@@ -57,7 +58,7 @@ Status Col2Im<T>::Compute(OpKernelContext* context) const {
   T* Ydata = Y->template MutableData<T>();
   for (auto i=0; i < Yshape.Size(); ++i)
     Ydata[i] = -1; // just for debug (to know what has been written to Ydata in the end)
-  const int64_t Y_offset = Yshape.Size() / Yshape[0];
+  // const int64_t Y_offset = Yshape.Size() / Yshape[0];
 
   std::cout << "\n\tInput 0: col_input = ("; for (auto i=0; i < Yshape.Size(); ++i) std::cout <<  col_input_data[i] << ", "; std::cout << ") with shape "<< col_input_shape << std::endl;
   std::cout << "\tInput 1: image_shape = ("; for (auto i=0; i < image_shape->Shape().Size(); ++i) std::cout << image_shape->Data<int64_t>()[i] << ", "; std::cout << ")" << std::endl;
@@ -80,7 +81,7 @@ Status Col2Im<T>::Compute(OpKernelContext* context) const {
     if (image_shape->Shape()[0] == 2) {
       std::cout << "image_shape->Shape()[0] == 2 --> Col2Im" << std::endl;
       math::Col2im<float, CPUMathUtil, StorageOrder::NCHW>(
-        col_input_data + image_id * col_input_offset,
+        col_input_data + image_id * col_output_offset,
         col_input_C,
         image_shape->Data<int64_t>()[0],
         image_shape->Data<int64_t>()[1],
@@ -94,12 +95,12 @@ Status Col2Im<T>::Compute(OpKernelContext* context) const {
         col2im_attrs_.pads[3],
         col2im_attrs_.strides[0],
         col2im_attrs_.strides[1],
-        Ydata + image_id * Y_offset,
+        Ydata + image_id * col_input_offset,
         &CPUMathUtil::Instance());
     } else {
       std::cout << "image_shape->Shape()[0] != 2 --> Col2ImNd (nd=" << image_shape->Shape()[0] << ") " << std::endl;
       math::Col2imNd<T, CPUMathUtil, StorageOrder::NCHW>(
-        col_input_data + image_id * col_input_offset,     // const T* data_col,
+        col_input_data + image_id * col_output_offset,    // const T* data_col,
         image_shape->Data<int64_t>(),                     // const int64_t* img_shape,
         Yshape.Slice(2).GetDims().data(),                 // const int64_t* output_shape,
         col_input_C,                                      // int64_t channels_col,
@@ -109,7 +110,7 @@ Status Col2Im<T>::Compute(OpKernelContext* context) const {
         col2im_attrs_.dilations.data(),                   // const int64_t* dilation,
         col2im_attrs_.pads.data(),                        // const int64_t* pad,
         kernel_shape->Shape().Size(),                     // ptrdiff_t N, --> #spatial_dims?
-        Ydata + image_id * Y_offset,                      // T* data_img,
+        Ydata + image_id * col_input_offset,                      // T* data_img,
         &CPUMathUtil::Instance()                          // Provider* provider
         );
     }

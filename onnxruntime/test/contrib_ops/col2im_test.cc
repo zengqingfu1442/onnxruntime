@@ -113,6 +113,34 @@ TEST(Col2ImContribOpTest, simple5dNCHWD) {
   test.Run();
 }
 
+TEST(Im2ColContribOpTest, simple) {
+  std::vector<float> input(24);
+  std::vector<float> expected_output(24);
+  std::iota(input.begin(), input.end(), 1);
+  expected_output = {1, 5, 9, 2, 6, 10, 3, 7, 11, 4, 8, 12, 13, 17, 21, 14, 18, 22, 15, 19, 23, 16, 20, 24};
+  float* actual_output = new float(24);
+  std::cout << "\nExpected output --> "; for (auto i=0; i < 24; ++i) std::cout <<  expected_output[i] << ", "; std::cout << ")" << std::endl;
+  math::Im2col<float, StorageOrder::NCHW>()(
+    input.data(),
+    int64_t(2),
+    int64_t(3),
+    int64_t(4),
+    int64_t(1),
+    int64_t(4),
+    int64_t(1),
+    int64_t(1),
+    int64_t(0),
+    int64_t(0),
+    int64_t(0),
+    int64_t(0),
+    int64_t(1),
+    int64_t(1),
+    actual_output,
+    float(0.));
+
+    std::cout << "\nActual output   --> "; for (auto i=0; i < 24; ++i) std::cout <<  actual_output[i] << ", "; std::cout << ")" << std::endl;
+    delete[] actual_output;
+}
 
 }  // namespace test
 }  // namespace onnxruntime
