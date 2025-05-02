@@ -4,9 +4,18 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Train, convert and predict with ONNX Runtime &#8212; ONNX Runtime 1.13.0 documentation</title>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-156955408-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-156955408-1');
+    </script>
+    
+    <title>Train, convert and predict with ONNX Runtime &#8212; ONNX Runtime 1.14.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../static/alabaster.css" />
     <link rel="stylesheet" type="text/css" href="../static/graphviz.css" />
@@ -15,10 +24,8 @@
     <link rel="stylesheet" type="text/css" href="../static/sg_gallery-dataframe.css" />
     <link rel="stylesheet" type="text/css" href="../static/sg_gallery-rendered-html.css" />
     <script data-url_root="../" id="documentation_options" src="../static/documentation_options.js"></script>
-    <script src="../static/jquery.js"></script>
-    <script src="../static/underscore.js"></script>
-    <script src="../static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../static/doctools.js"></script>
+    <script src="../static/sphinx_highlight.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="prev" title="Common errors with onnxruntime" href="plot_common_errors.html" />
@@ -48,29 +55,29 @@ to download the full example code</p>
 <p>This example demonstrates an end to end scenario
 starting with the training of a machine learned model
 to its use in its converted from.</p>
-<div class="contents local topic" id="contents">
+<nav class="contents local" id="contents">
 <ul class="simple">
 <li><p><a class="reference internal" href="#train-a-logistic-regression" id="id1">Train a logistic regression</a></p></li>
 <li><p><a class="reference internal" href="#conversion-to-onnx-format" id="id2">Conversion to ONNX format</a></p></li>
 <li><p><a class="reference internal" href="#probabilities" id="id3">Probabilities</a></p></li>
 <li><p><a class="reference internal" href="#benchmark-with-randomforest" id="id4">Benchmark with RandomForest</a></p></li>
 </ul>
-</div>
+</nav>
 <section id="train-a-logistic-regression">
-<h2><a class="toc-backref" href="#id1">Train a logistic regression</a><a class="headerlink" href="#train-a-logistic-regression" title="Permalink to this heading">¶</a></h2>
+<h2><a class="toc-backref" href="#id1" role="doc-backlink">Train a logistic regression</a><a class="headerlink" href="#train-a-logistic-regression" title="Permalink to this heading">¶</a></h2>
 <p>The first step consists in retrieving the iris datset.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.datasets</span> <span class="k">import</span> <span class="n">load_iris</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.datasets</span> <span class="kn">import</span> <span class="n">load_iris</span>
 
 <span class="n">iris</span> <span class="o">=</span> <span class="n">load_iris</span><span class="p">()</span>
 <span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">iris</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">iris</span><span class="o">.</span><span class="n">target</span>
 
-<span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="k">import</span> <span class="n">train_test_split</span>
+<span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">train_test_split</span>
 
 <span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Then we fit a model.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="k">import</span> <span class="n">LogisticRegression</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="kn">import</span> <span class="n">LogisticRegression</span>
 
 <span class="n">clr</span> <span class="o">=</span> <span class="n">LogisticRegression</span><span class="p">()</span>
 <span class="n">clr</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
@@ -82,25 +89,25 @@ to its use in its converted from.</p>
 <br />
 <br /><p>We compute the prediction on the test set
 and we show the confusion matrix.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="k">import</span> <span class="n">confusion_matrix</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">confusion_matrix</span>
 
 <span class="n">pred</span> <span class="o">=</span> <span class="n">clr</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">confusion_matrix</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">pred</span><span class="p">))</span>
 </pre></div>
 </div>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>[[13  0  0]
- [ 0 11  2]
- [ 0  0 12]]
+ [ 0 10  1]
+ [ 0  1 13]]
 </pre></div>
 </div>
 </section>
 <section id="conversion-to-onnx-format">
-<h2><a class="toc-backref" href="#id2">Conversion to ONNX format</a><a class="headerlink" href="#conversion-to-onnx-format" title="Permalink to this heading">¶</a></h2>
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">Conversion to ONNX format</a><a class="headerlink" href="#conversion-to-onnx-format" title="Permalink to this heading">¶</a></h2>
 <p>We use module
 <a class="reference external" href="https://github.com/onnx/sklearn-onnx">sklearn-onnx</a>
 to convert the model into ONNX format.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">skl2onnx</span> <span class="k">import</span> <span class="n">convert_sklearn</span>
-<span class="kn">from</span> <span class="nn">skl2onnx.common.data_types</span> <span class="k">import</span> <span class="n">FloatTensorType</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">skl2onnx</span> <span class="kn">import</span> <span class="n">convert_sklearn</span>
+<span class="kn">from</span> <span class="nn">skl2onnx.common.data_types</span> <span class="kn">import</span> <span class="n">FloatTensorType</span>
 
 <span class="n">initial_type</span> <span class="o">=</span> <span class="p">[(</span><span class="s2">&quot;float_input&quot;</span><span class="p">,</span> <span class="n">FloatTensorType</span><span class="p">([</span><span class="kc">None</span><span class="p">,</span> <span class="mi">4</span><span class="p">]))]</span>
 <span class="n">onx</span> <span class="o">=</span> <span class="n">convert_sklearn</span><span class="p">(</span><span class="n">clr</span><span class="p">,</span> <span class="n">initial_types</span><span class="o">=</span><span class="n">initial_type</span><span class="p">)</span>
@@ -140,7 +147,7 @@ output name=&#39;output_label&#39; and shape=[None]
 <p>The prediction are perfectly identical.</p>
 </section>
 <section id="probabilities">
-<h2><a class="toc-backref" href="#id3">Probabilities</a><a class="headerlink" href="#probabilities" title="Permalink to this heading">¶</a></h2>
+<h2><a class="toc-backref" href="#id3" role="doc-backlink">Probabilities</a><a class="headerlink" href="#probabilities" title="Permalink to this heading">¶</a></h2>
 <p>Probabilities are needed to compute other
 relevant metrics such as the ROC Curve.
 Let’s see how to get them first with
@@ -149,9 +156,9 @@ scikit-learn.</p>
 <span class="nb">print</span><span class="p">(</span><span class="n">prob_sklearn</span><span class="p">[:</span><span class="mi">3</span><span class="p">])</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>[[9.60244512e-02 8.88242228e-01 1.57333213e-02]
- [2.71799658e-02 9.10234192e-01 6.25858422e-02]
- [9.45106278e-01 5.48934527e-02 2.69394014e-07]]
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>[[1.06542041e-04 5.28906856e-02 9.47002772e-01]
+ [9.48316543e-06 1.34773456e-02 9.86513171e-01]
+ [2.66508329e-07 5.64823562e-03 9.94351498e-01]]
 </pre></div>
 </div>
 <p>And then with ONNX Runtime.
@@ -164,13 +171,13 @@ The probabilies appear to be</p>
 <span class="n">pprint</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">prob_rt</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">])</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>[{0: 0.09602457284927368, 1: 0.8882421851158142, 2: 0.015733299776911736},
- {0: 0.027180003002285957, 1: 0.9102342128753662, 2: 0.06258579343557358},
- {0: 0.9451063275337219, 1: 0.05489342659711838, 2: 2.693937801723223e-07}]
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>[{0: 0.00010654202196747065, 1: 0.05289068445563316, 2: 0.9470027685165405},
+ {0: 9.48318211158039e-06, 1: 0.01347736269235611, 2: 0.9865131378173828},
+ {0: 2.6650818085727224e-07, 1: 0.005648239981383085, 2: 0.9943515062332153}]
 </pre></div>
 </div>
 <p>Let’s benchmark.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">timeit</span> <span class="k">import</span> <span class="n">Timer</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">timeit</span> <span class="kn">import</span> <span class="n">Timer</span>
 
 
 <span class="k">def</span> <span class="nf">speed</span><span class="p">(</span><span class="n">inst</span><span class="p">,</span> <span class="n">number</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="mi">20</span><span class="p">):</span>
@@ -190,11 +197,11 @@ The probabilies appear to be</p>
 </pre></div>
 </div>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Execution time for clr.predict
-Average 8.66e-05 min=7.56e-05 max=0.000104
+Average 4.39e-05 min=4.22e-05 max=5.83e-05
 Execution time for ONNX Runtime
-Average 2.74e-05 min=2.42e-05 max=3.36e-05
+Average 2.82e-05 min=2.55e-05 max=3.82e-05
 
-2.7374654999903216e-05
+2.8161094999958892e-05
 </pre></div>
 </div>
 <p>Let’s benchmark a scenario similar to what a webservice
@@ -222,11 +229,11 @@ as opposed to a batch of prediction.</p>
 </pre></div>
 </div>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Execution time for clr.predict
-Average 0.00817 min=0.00748 max=0.00911
+Average 0.00404 min=0.00402 max=0.0041
 Execution time for sess_predict
-Average 0.00152 min=0.00143 max=0.00175
+Average 0.00106 min=0.00105 max=0.00109
 
-0.0015233170999999857
+0.0010607179049998906
 </pre></div>
 </div>
 <p>Let’s do the same for the probabilities.</p>
@@ -243,11 +250,11 @@ Average 0.00152 min=0.00143 max=0.00175
 </pre></div>
 </div>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Execution time for predict_proba
-Average 0.0115 min=0.011 max=0.0136
+Average 0.00603 min=0.00601 max=0.00609
 Execution time for sess_predict_proba
-Average 0.0016 min=0.00147 max=0.00227
+Average 0.00114 min=0.00113 max=0.00116
 
-0.0015962060200003236
+0.0011420901350000178
 </pre></div>
 </div>
 <p>This second comparison is better as
@@ -256,9 +263,9 @@ computes the label and the probabilities
 in every case.</p>
 </section>
 <section id="benchmark-with-randomforest">
-<h2><a class="toc-backref" href="#id4">Benchmark with RandomForest</a><a class="headerlink" href="#benchmark-with-randomforest" title="Permalink to this heading">¶</a></h2>
+<h2><a class="toc-backref" href="#id4" role="doc-backlink">Benchmark with RandomForest</a><a class="headerlink" href="#benchmark-with-randomforest" title="Permalink to this heading">¶</a></h2>
 <p>We first train and save a model in ONNX format.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.ensemble</span> <span class="k">import</span> <span class="n">RandomForestClassifier</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.ensemble</span> <span class="kn">import</span> <span class="n">RandomForestClassifier</span>
 
 <span class="n">rf</span> <span class="o">=</span> <span class="n">RandomForestClassifier</span><span class="p">()</span>
 <span class="n">rf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
@@ -285,11 +292,11 @@ in every case.</p>
 </pre></div>
 </div>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Execution time for predict_proba
-Average 1.31 min=1.29 max=1.33
+Average 0.69 min=0.682 max=0.699
 Execution time for sess_predict_proba
-Average 0.0022 min=0.00198 max=0.00278
+Average 0.00142 min=0.00141 max=0.00148
 
-0.002198638819999985
+0.0014222836849995702
 </pre></div>
 </div>
 <p>Let’s see with different number of trees.</p>
@@ -312,7 +319,7 @@ Average 0.0022 min=0.00198 max=0.00278
     <span class="n">trt</span> <span class="o">=</span> <span class="n">speed</span><span class="p">(</span><span class="s2">&quot;loop(X_test, sess_predict_proba_loop, 100)&quot;</span><span class="p">,</span> <span class="n">number</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
     <span class="n">measures</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;n_trees&quot;</span><span class="p">:</span> <span class="n">n_trees</span><span class="p">,</span> <span class="s2">&quot;sklearn&quot;</span><span class="p">:</span> <span class="n">tsk</span><span class="p">,</span> <span class="s2">&quot;rt&quot;</span><span class="p">:</span> <span class="n">trt</span><span class="p">})</span>
 
-<span class="kn">from</span> <span class="nn">pandas</span> <span class="k">import</span> <span class="n">DataFrame</span>
+<span class="kn">from</span> <span class="nn">pandas</span> <span class="kn">import</span> <span class="n">DataFrame</span>
 
 <span class="n">df</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">measures</span><span class="p">)</span>
 <span class="n">ax</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s2">&quot;n_trees&quot;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;sklearn&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;scikit-learn&quot;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;blue&quot;</span><span class="p">,</span> <span class="n">logy</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -324,40 +331,40 @@ Average 0.0022 min=0.00198 max=0.00278
 </pre></div>
 </div>
 <img src="../images/sphx_glr_plot_train_convert_predict_001.png" srcset="../images/sphx_glr_plot_train_convert_predict_001.png" alt="Speed comparison between scikit-learn and ONNX Runtime For a random forest on Iris dataset" class = "sphx-glr-single-img"/><div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>5
-Average 0.0984 min=0.0967 max=0.1
-Average 0.00149 min=0.00143 max=0.00152
+Average 0.0555 min=0.0554 max=0.0555
+Average 0.00108 min=0.00107 max=0.0011
 10
-Average 0.162 min=0.158 max=0.164
-Average 0.00153 min=0.0014 max=0.00172
+Average 0.089 min=0.0888 max=0.0896
+Average 0.00108 min=0.00107 max=0.00112
 15
-Average 0.229 min=0.225 max=0.235
-Average 0.00157 min=0.00151 max=0.00161
+Average 0.122 min=0.121 max=0.122
+Average 0.00111 min=0.0011 max=0.00115
 20
-Average 0.287 min=0.283 max=0.291
-Average 0.00161 min=0.00149 max=0.00184
+Average 0.157 min=0.156 max=0.159
+Average 0.00112 min=0.00111 max=0.00115
 25
-Average 0.35 min=0.349 max=0.352
-Average 0.00164 min=0.0015 max=0.00184
+Average 0.188 min=0.187 max=0.188
+Average 0.00113 min=0.00112 max=0.00117
 30
-Average 0.414 min=0.411 max=0.422
-Average 0.00165 min=0.0014 max=0.00175
+Average 0.221 min=0.22 max=0.223
+Average 0.00114 min=0.00112 max=0.00117
 35
-Average 0.475 min=0.471 max=0.483
-Average 0.00171 min=0.00159 max=0.00178
+Average 0.253 min=0.253 max=0.254
+Average 0.00115 min=0.00114 max=0.00118
 40
-Average 0.532 min=0.527 max=0.536
-Average 0.00176 min=0.00165 max=0.00198
+Average 0.287 min=0.285 max=0.287
+Average 0.00116 min=0.00115 max=0.0012
 45
-Average 0.598 min=0.593 max=0.604
-Average 0.00179 min=0.00171 max=0.00191
+Average 0.32 min=0.319 max=0.321
+Average 0.00119 min=0.00118 max=0.00123
 50
-Average 0.669 min=0.663 max=0.677
-Average 0.00186 min=0.00167 max=0.00213
+Average 0.352 min=0.352 max=0.352
+Average 0.0012 min=0.00118 max=0.00124
 
-&lt;matplotlib.legend.Legend object at 0x7f551da12d00&gt;
+&lt;matplotlib.legend.Legend object at 0x7fb427e04a00&gt;
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 6 minutes  3.597 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 3 minutes  13.215 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-plot-train-convert-predict-py">
 <div class="sphx-glr-download sphx-glr-download-python docutils container">
 <p><a class="reference download internal" download="" href="../downloads/c647c128e0cf2b3db04ce60b41ef1a14/plot_train_convert_predict.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_train_convert_predict.py</span></code></a></p>
@@ -432,8 +439,8 @@ Average 0.00186 min=0.00167 max=0.00213
       &copy;2018-2021, Microsoft.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.1.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 6.1.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
       
       |
       <a href="../sources/auto_examples/plot_train_convert_predict.rst.txt"
